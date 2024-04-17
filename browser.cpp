@@ -81,14 +81,17 @@ void read_user_input(char message[]) {
  */
 void load_cookie() {
     ifstream cookiefile(COOKIE_PATH);
+    string id;
     if (cookiefile.is_open()){
         getline(cookiefile, id);
+        id = stoi(id);
         if(id == NULL) {session_id = id;}
         else {session_id = -1;} 
     }
     else session_id = -1;
     cookiefile.close();
 }
+
 
 /**
  * Saves the session ID to the cookie on the disk.
