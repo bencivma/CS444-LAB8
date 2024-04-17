@@ -12,7 +12,8 @@
  */
 
 #include "net_util.hpp"
-
+#include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -22,7 +23,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <arpa/inet.h>
-
+using namespace std;
 #define COOKIE_PATH "./browser.cookie"
 
 static bool browser_on = true;  // Determines if the browser is on/off.
@@ -79,8 +80,14 @@ void read_user_input(char message[]) {
  * The file path of the cookie is stored in COOKIE_PATH.
  */
 void load_cookie() {
-    // TODO
-    session_id = -1;
+    ifstream cookiefile(COOKIE_PATH);
+    if (cookiefile.is_open()){
+        getline(cookiefile, id);
+        if(id == NULL) {session_id = id;}
+        else {session_id = -1;} 
+    }
+    else session_id = -1;
+    cookiefile.close();
 }
 
 /**
@@ -88,7 +95,11 @@ void load_cookie() {
  * The file path of the cookie is stored in COOKIE_PATH.
  */
 void save_cookie() {
-    // TODO
+    ofstream cookiefile(COOKIE_PATH);
+    if (cookiefile.is_open()){
+        cookiefile << session_id;
+    }
+    cookiefile.close();
 }
 
 /**
