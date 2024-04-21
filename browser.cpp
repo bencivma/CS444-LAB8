@@ -81,22 +81,42 @@ void read_user_input(char message[]) {
  */
 void load_cookie() {
     ifstream cookiefile(COOKIE_PATH);
-    string id;
-    bool check = true;
+    char* id;
     if (cookiefile.is_open()){
-        getline(cookiefile, id);
-        if (id.empty()) {check = false;}
-        else {
-            for (int i = 0; i < id.length(); i++) {
-                if(!isdigit(id[i])) {check = false;}
+        cookiefile >> id;
+        if (is_str_numeric(id)) {session_id = stoi(id);}
+        else { 
+            cout << "invalid string in cookie file";
+            session_id = -1;
             }
-        }
-        if (check) {session_id = stoi(id);}
-        else {session_id = -1;}
     }
-    else session_id = -1;
+    else {
+        cout << "failed to open file";
+        session_id = -1;
+        }
     cookiefile.close();
 }
+
+bool is_str_numeric(const char str[]) {
+    if (str == NULL) {
+        return false;
+    }
+
+    if (!(isdigit(str[0]) || (str[0] == '-') || (str[0] == '.'))) {
+        return false;
+    }
+
+    int i = 1;
+    while (str[i] != '\0') {
+        if (!(isdigit(str[i]) || str[i] == '.')) {
+            return false;
+        }
+        i++;
+    }
+
+    return true;
+}
+
 
 
 /**
