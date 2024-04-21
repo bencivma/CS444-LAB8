@@ -82,11 +82,17 @@ void read_user_input(char message[]) {
 void load_cookie() {
     ifstream cookiefile(COOKIE_PATH);
     string id;
+    bool check = true;
     if (cookiefile.is_open()){
         getline(cookiefile, id);
-        id = stoi(id);
-        if(id == NULL) {session_id = id;}
-        else {session_id = -1;} 
+        if (id.empty()) {check = false;}
+        else {
+            for (int i = 0; i < id.length(); i++) {
+                if(!isdigit(id[i])) {check = false;}
+            }
+        }
+        if (check) {session_id = stoi(id);}
+        else {session_id = -1;}
     }
     else session_id = -1;
     cookiefile.close();
@@ -121,11 +127,15 @@ void register_server() {
  * Listens to the server; keeps receiving and printing the messages from the server in a while loop
  * if the browser is on.
  */
-void server_listener() {
+void* server_listener(void* arg) {
+
+    while (browser_on){
     char message[BUFFER_LEN];
     receive_message(server_socket_fd, message);
     puts(message);
+    }
 }
+
 
 /**
  * Starts the browser. Sets up the connection, start the listener thread,
@@ -165,11 +175,12 @@ void start_browser(const char host_ip[], int port) {
     save_cookie();
 
     // Main loop to read in the user's input and send it out.
+    pthread_t tid;
+    pthread_create(&tid, NULL, server_listener, NULL);
     while (browser_on) {
         char message[BUFFER_LEN];
         read_user_input(message);
         send_message(server_socket_fd, message);
-        server_listener();
     }
 
     // Closes the socket.
