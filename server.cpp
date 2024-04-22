@@ -240,6 +240,13 @@ void get_session_file_path(int session_id, char path[]) {
  */
 void load_all_sessions() {
     // TODO
+    ifstream session_file;
+    session_file.open(DATA_DIR);
+    string session_id;
+    session_t temp;
+    while (true){
+        
+    };
 }
 
 /**
@@ -250,6 +257,11 @@ void load_all_sessions() {
  */
 void save_session(int session_id) {
     // TODO
+    ofstream session_file(get_session_file_path(session_id, DATA_DIR)); // dont know how to get correct file path
+    char result_array[9];
+    session_to_str(session_id, result_array);
+    for (int i = 0; i < sizeof(result_array); i++){ session_file << result_array[i]; }
+    session_file.close();
 }
 
 /**
