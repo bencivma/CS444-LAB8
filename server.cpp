@@ -239,14 +239,15 @@ void get_session_file_path(int session_id, char path[]) {
  * Use get_session_file_path() to get the file path for each session.
  */
 void load_all_sessions() {
-    // TODO
-    ifstream session_file;
-    session_file.open(DATA_DIR);
-    string session_id;
-    session_t temp;
-    while (true){
-        
-    };
+    char session_path[SESSION_PATH_LEN];
+    for (int i = 0; i < NUM_SESSIONS; i++) {
+        get_session_file_path(i, session_path);
+        ifstream session_file(session_path);
+        if (session_file.is_open()) {
+            session_file.read((char*)&session_list[i], sizeof(session_t));
+            session_file.close();
+        }
+    }
 }
 
 /**
@@ -256,12 +257,13 @@ void load_all_sessions() {
  * @param session_id the session ID
  */
 void save_session(int session_id) {
-    // TODO
-    ofstream session_file(get_session_file_path(session_id, DATA_DIR)); // dont know how to get correct file path
-    char result_array[9];
-    session_to_str(session_id, result_array);
-    for (int i = 0; i < sizeof(result_array); i++){ session_file << result_array[i]; }
-    session_file.close();
+    char session_path[SESSION_PATH_LEN];
+    get_session_file_path(session_id, session_path);
+    ofstream session_file(session_path, ios::binary);
+    if (session_file.is_open()) {
+        session_file.write((char*)&session_list[session_id], sizeof(session_t));
+        session_file.close();
+    }
 }
 
 /**
