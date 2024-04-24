@@ -47,9 +47,12 @@ void save_cookie();
 // the final session ID.
 void register_server();
 
+// Determines if the given string represents a number.
+bool is_str_numeric(const string str);
+
 // Listens to the server.
 // Keeps receiving and printing the messages from the server.
-void server_listener();
+void* server_listener(void* arg);
 
 // Starts the browser.
 // Sets up the connection, start the listener thread,
@@ -81,7 +84,7 @@ void read_user_input(char message[]) {
  */
 void load_cookie() {
     ifstream cookiefile(COOKIE_PATH);
-    char* id;
+    string id;
     if (cookiefile.is_open()){
         cookiefile >> id;
         if (is_str_numeric(id)) {session_id = stoi(id);}
@@ -97,8 +100,8 @@ void load_cookie() {
     cookiefile.close();
 }
 
-bool is_str_numeric(const char str[]) {
-    if (str == NULL) {
+bool is_str_numeric(const string str) {
+    if (str.empty()) {
         return false;
     }
 

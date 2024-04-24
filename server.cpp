@@ -23,7 +23,11 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
-
+#include <unordered_map>
+#include <string>
+#include <iostream>
+#include <fstream>
+using namespace std;
 #define NUM_VARIABLES 26
 #define NUM_SESSIONS 128
 #define NUM_BROWSER 128
@@ -43,7 +47,7 @@ typedef struct session_struct {
 } session_t;
 
 static browser_t browser_list[NUM_BROWSER];                             // Stores the information of all browsers.
-static session_t session_list[NUM_SESSIONS];                            // Stores the information of all sessions.
+static unordered_map<int, session_t> session_list;                            // Stores the information of all sessions.
 static pthread_mutex_t browser_list_mutex = PTHREAD_MUTEX_INITIALIZER;  // A mutex lock for the browser list.
 static pthread_mutex_t session_list_mutex = PTHREAD_MUTEX_INITIALIZER;  // A mutex lock for the session list.
 
@@ -78,7 +82,7 @@ int register_browser(int browser_socket_fd);
 // processing the message received,
 // broadcasting the update to all browsers with the same session ID,
 // and backing up the session on the disk.
-void browser_handler(int browser_socket_fd);
+void* browser_handler(void* arg);
 
 // Starts the server.
 // Sets up the connection,
@@ -96,10 +100,10 @@ void start_server(int port);
  */
 void session_to_str(int session_id, char result[]) {
     memset(result, 0, BUFFER_LEN);
-    session_t session = session_list[session_id];
+    session_t session = session_list.at(session_id);
 
     for (int i = 0; i < NUM_VARIABLES; ++i) {
-        if (session.variables[i]) {
+        if (session.variables[i]) { 
             char line[32];
 
             if (session.values[i] < 1000) {
@@ -277,26 +281,33 @@ int register_browser(int browser_socket_fd) {
     int browser_id;
 
     for (int i = 0; i < NUM_BROWSER; ++i) {
+        pthread_mutex_lock(&browser_list_mutex);
         if (!browser_list[i].in_use) {
             browser_id = i;
             browser_list[browser_id].in_use = true;
             browser_list[browser_id].socket_fd = browser_socket_fd;
+            pthread_mutex_unlock(&browser_list_mutex);
             break;
         }
+        pthread_mutex_unlock(&browser_list_mutex);
     }
-
+    //Maybe unlock here?
     char message[BUFFER_LEN];
     receive_message(browser_socket_fd, message);
 
     int session_id = strtol(message, NULL, 10);
     if (session_id == -1) {
-        for (int i = 0; i < NUM_SESSIONS; ++i) {
+        do  {
+            int i = rand() % 127;
+            pthread_mutex_lock(&session_list_mutex);
             if (!session_list[i].in_use) {
                 session_id = i;
                 session_list[session_id].in_use = true;
+                pthread_mutex_unlock(&session_list_mutex);
                 break;
             }
-        }
+                pthread_mutex_unlock(&session_list_mutex);
+        } while(true);
     }
     browser_list[browser_id].session_id = session_id;
 
@@ -313,7 +324,8 @@ int register_browser(int browser_socket_fd) {
  *
  * @param browser_socket_fd the socket file descriptor of the browser connected
  */
-void browser_handler(int browser_socket_fd) {
+void* browser_handler(void* arg) {
+    int browser_socket_fd = *((int *) arg);
     int browser_id;
 
     browser_id = register_browser(browser_socket_fd);
@@ -336,7 +348,7 @@ void browser_handler(int browser_socket_fd) {
             browser_list[browser_id].in_use = false;
             pthread_mutex_unlock(&browser_list_mutex);
             printf("Browser #%d exited.\n", browser_id);
-            return;
+            return 0;
         }
 
         if (message[0] == '\0') {
@@ -401,7 +413,8 @@ void start_server(int port) {
         }
 
         // Starts the handler for the new browser.
-        browser_handler(browser_socket_fd);
+        pthread_t tid;
+        pthread_create(&tid, NULL, browser_handler, &browser_socket_fd);
     }
 
     // Closes the socket.
