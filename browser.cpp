@@ -87,7 +87,7 @@ void load_cookie() {
     string id;
     if (cookiefile.is_open()){
         getline(cookiefile, id);
-        if(is_str_numeric(id)) {session_id = (*int)id;}
+        if(is_str_numeric(id)) {session_id = stoi(id);}
         else {session_id = -1;}
     }
     else {

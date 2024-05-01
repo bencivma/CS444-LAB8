@@ -237,6 +237,7 @@ bool process_message(int session_id, const char message[]) {
 }
 
 
+
 /**
  * Broadcasts the given message to all browsers with the same session ID.
  *
