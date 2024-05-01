@@ -196,14 +196,12 @@ bool process_message(int session_id, const char message[]) {
 
     // Processes the operation symbol.
     token = strtok(NULL, " ");
-    if (token == NULL){ return false; }
-    if (token[0] != '+' && token[0] != '-' && token[0] != '/' && token[0] != '*'){
-        return false;
-    }
     if (token == NULL) {
         session_list[session_id].variables[result_idx] = true;
         session_list[session_id].values[result_idx] = first_value;
         return true;
+    } else if (token[0] != '+' && token[0] != '-' && token[0] != '/' && token[0] != '*'){
+        return false;
     }
     symbol = token[0];
 
