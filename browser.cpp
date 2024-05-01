@@ -86,12 +86,9 @@ void load_cookie() {
     ifstream cookiefile(COOKIE_PATH);
     string id;
     if (cookiefile.is_open()){
-        cookiefile >> id;
-        if (is_str_numeric(id)) {session_id = stoi(id);}
-        else { 
-            cout << "invalid string in cookie file";
-            session_id = -1;
-            }
+        getline(cookiefile, id);
+        if(id == NULL) {session_id = -1;}
+        else {session_id = stoi(id);} 
     }
     else {
         cout << "failed to open file";
@@ -159,6 +156,13 @@ void* server_listener(void* arg) {
     }
 }
 
+void threadmanager(){
+    pthread_t ptid;
+
+    pthread_create(&ptid, NULL, &func, NULL);
+    pthread_join(ptid, NULL);
+    pthread_exit(NULL)
+}
 
 /**
  * Starts the browser. Sets up the connection, start the listener thread,
@@ -204,6 +208,7 @@ void start_browser(const char host_ip[], int port) {
         char message[BUFFER_LEN];
         read_user_input(message);
         send_message(server_socket_fd, message);
+        threadmanager();
     }
 
     // Closes the socket.

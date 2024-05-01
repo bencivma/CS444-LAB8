@@ -238,6 +238,7 @@ bool process_message(int session_id, const char message[]) {
     return true;
 }
 
+
 /**
  * Broadcasts the given message to all browsers with the same session ID.
  *
@@ -272,7 +273,9 @@ void load_all_sessions() {
         get_session_file_path(i, session_path);
         ifstream session_file(session_path);
         if (session_file.is_open()) {
+            pthread_mutex_lock(&session_list_mutex);
             session_file.read((char*)&session_list[i], sizeof(session_t));
+            pthread_mutex_unlock(&session_list_mutex);
             session_file.close();
         }
     }
@@ -289,7 +292,9 @@ void save_session(int session_id) {
     get_session_file_path(session_id, session_path);
     ofstream session_file(session_path, ios::binary);
     if (session_file.is_open()) {
+        pthread_mutex_lock(&session_list_mutex);
         session_file.write((char*)&session_list[session_id], sizeof(session_t));
+        pthread_mutex_unlock(&session_list_mutex);
         session_file.close();
     }
 }
