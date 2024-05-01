@@ -34,6 +34,7 @@ using namespace std;
 #define DATA_DIR "./sessions"
 #define SESSION_PATH_LEN 128
 
+
 typedef struct browser_struct {
     bool in_use;
     int socket_fd;
@@ -154,6 +155,7 @@ bool is_str_numeric(const char str[]) {
 bool process_message(int session_id, const char message[]) {
     char *token;
     int result_idx;
+    int test_idx;
     double first_value;
     char symbol;
     double second_value;
@@ -161,25 +163,43 @@ bool process_message(int session_id, const char message[]) {
     // Makes a copy of the string since strtok() will modify the string that it is processing.
     char data[BUFFER_LEN];
     strcpy(data, message);
-
     // Processes the result variable.
     token = strtok(data, " ");
+    if (token == NULL){ return false; }
     result_idx = token[0] - 'a';
+    if (strlen(token) > 1  || (result_idx < 0 || result_idx > 25)){
+        return false;
+    }
 
+
+    // any variable will be a val 0-25
     // Processes "=".
     token = strtok(NULL, " ");
+    if (token == NULL){ return false; }
+    if (token[0] != '='){
+        return false;
+    }
+
 
     // Processes the first variable/value.
     token = strtok(NULL, " ");
+    if (token == NULL){ return false; }
     if (is_str_numeric(token)) {
         first_value = strtod(token, NULL);
     } else {
         int first_idx = token[0] - 'a';
+        if (strlen(token) > 1  || (first_idx < 0 || first_idx > 25)){
+            return false;
+        }
         first_value = session_list[session_id].values[first_idx];
     }
 
     // Processes the operation symbol.
     token = strtok(NULL, " ");
+    if (token == NULL){ return false; }
+    if (token[0] != '+' && token[0] != '-' && token[0] != '/' && token[0] != '*'){
+        return false;
+    }
     if (token == NULL) {
         session_list[session_id].variables[result_idx] = true;
         session_list[session_id].values[result_idx] = first_value;
@@ -189,10 +209,14 @@ bool process_message(int session_id, const char message[]) {
 
     // Processes the second variable/value.
     token = strtok(NULL, " ");
+    if (token == NULL){ return false; }
     if (is_str_numeric(token)) {
         second_value = strtod(token, NULL);
     } else {
         int second_idx = token[0] - 'a';
+        if (strlen(token) > 1  || (second_idx < 0 || second_idx > 25)){
+            return false;
+        }
         second_value = session_list[session_id].values[second_idx];
     }
 
@@ -357,7 +381,7 @@ void* browser_handler(void* arg) {
 
         bool data_valid = process_message(session_id, message);
         if (!data_valid) {
-            // Send the error message to the browser.
+            printf("Statement was not formatted correctly 1\n");
             continue;
         }
 
